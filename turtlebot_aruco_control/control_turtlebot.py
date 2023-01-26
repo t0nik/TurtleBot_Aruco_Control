@@ -20,12 +20,19 @@ class ControlTurtleBot(Node):
         # Subscriber
         self.subscription = self.create_subscription(Int32,'aruco_zone',self.listener_callback, 10)
         self.subscription  # prevent unused variable warning
-        self.zone = 0.0
+        self.zone = 0
 
     def timer_callback(self):
         set_control = Twist()
         # Floats
-        set_control.linear.x = self.zone
+        if (self.zone == 1):
+            set_control.linear.x = 1.0
+        elif (self.zone == 2):
+            set_control.linear.x = -1.0
+        else:
+            set_control.linear.x = 0.0
+
+        
         set_control.linear.y = 0.0
         set_control.linear.z = 0.0
         set_control.angular.x = 0.0
@@ -36,7 +43,7 @@ class ControlTurtleBot(Node):
         self.i += 1 # Whatever
     
     def listener_callback(self, recieved_zone):
-        self.zone =  float(recieved_zone.data)
+        self.zone =  recieved_zone.data
 
 
 def main(args=None):

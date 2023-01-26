@@ -40,32 +40,35 @@ class ArucoDetection(Node):
         # print(type(image_data), print(type(cv_image))) % sensor_msgs.msg.Image, np.array
 
         corners, ids, _ = cv2.aruco.detectMarkers(cv_image, self.aruco_dict)
-        position_display = np.zeros((image_data.height,image_data.width,3), np.uint8)
+        position_display = cv_image # np.zeros((image_data.height,image_data.width,3), np.uint8)
         if(ids is not None):
             self.zone, found_corner = self.find_zone(cv_image, corners, ids)
             if(found_corner is not None):
                 # Draws ArUco markers
-                cv2.rectangle(position_display,(found_corner[0][0],found_corner[0][1]),(found_corner[3][0],found_corner[3][1]),(255,255,0),2)
+                found_corner = found_corner.astype(dtype=np.int32)
+                cv2.rectangle(position_display,(found_corner[0][0],found_corner[0][1]),(found_corner[2][0],found_corner[2][1]),(255,255,0),2)
         # Center line
         cv2.line(position_display,(0,image_data.height//2-1),(image_data.width-1,image_data.height//2-1),(255,255,0),2)
         cv2.imshow(self.window_name, position_display)
         cv2.waitKey(25)
 
-    def verify_position(image, corners):
-        position = ArucoDetection.zones['center']
+    def verify_position(self, image, corners):
+        position = self.zones['center']
         height = image.shape[0]
         width = image.shape[1]
         # print(width, height)
         image_center_y = height // 2 - 1
         image_center_x = width // 2 - 1
+        print(corners.shape, type(corners[0][1]))
+        corners = corners.astype(dtype=np.int32)
         if corners[0][1] > image_center_y and corners[1][1] > image_center_y: # Up left, Up right
-            position = ArucoDetection.zones['lower']
+            position = self.zones['lower']
         elif corners[2][1] < image_center_y and corners[3][1] < image_center_y:  # Down left, down right
-            position = ArucoDetection.zones['upper']
+            position = self.zones['upper']
 
         return position
 
-    def find_zone(image, corners, ids):
+    def find_zone(self, image, corners, ids):
         """Finds the zone - image placement of aruco with id 9.
         returns 0 when aruco is on the middle x axis,
                 1 when aruco is above the middle x axis,
@@ -77,7 +80,7 @@ class ArucoDetection(Node):
         for id in ids:
             if id == 9:
                 found_corner = corners[corners_id][0]
-                zone = ArucoDetection.verify_position(image, corners[corners_id][0])
+                zone = self.verify_position(image, corners[corners_id][0])
                 break
             else:
                 corners_id += 1
